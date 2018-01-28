@@ -30,7 +30,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
     }
 }
 
-//__device__ const int BLOCK_SIZE = 640;
+
 
 /********* Device Function - Gaussian ******/
 __device__ double gaussian(double norm)
@@ -42,7 +42,7 @@ __device__ double gaussian(double norm)
 /******** Kernel Function *******/
 __global__ void meanshiftKernel(double *devX, double *devY, int size)
 {
-    // __shared__ double devY[BLOCK_SIZE*N];
+    
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (idx < size) //if idx bigger than matrix height return
@@ -51,18 +51,10 @@ __global__ void meanshiftKernel(double *devX, double *devY, int size)
         int j, k, iterations = 0;
         double sumNum[N] = {0}, sumDenum = 0, dist, meanshift = 0xFFFFFFFF, m_new[N], m[N];
 
-        /* for (int currentBlockOfPoints = 0; currentBlockOfPoints < gridDim.x; currentBlockOfPoints++)
-    {
-        if (threadIdx.x + currentBlockOfPoints * BLOCK_SIZE  < size * N)
-            for(k=0;k<N;k++)
-            devY[threadIdx.x*N+k] = devX[threadIdx.x*N + k + (currentBlockOfPoints * BLOCK_SIZE)];
-    }
-    __syncthreads();
-    */
-        //if(idx == 599) printf(" idx = %d  devX= %.6f , %.6f\n", idx, devX[threadIdx.x*N], devX[threadIdx.x*N+1]);
+       
         for (k = 0; k < N; k++)
             m[k] = devY[idx * N + k];
-        //  __syncthreads();
+      
         while (meanshift > EPSILON && iterations < MAX_ITERATIONS)
         {
             meanshift = 0;
@@ -102,14 +94,6 @@ __global__ void meanshiftKernel(double *devX, double *devY, int size)
             devY[idx * N + k] = m[k];
         }
 
-        /*for (int currentBlockOfPoints = 0; currentBlockOfPoints < gridDim.x; currentBlockOfPoints++)
-    {
-        if (threadIdx.x + currentBlockOfPoints * BLOCK_SIZE  < size * N)
-            for(k=0;k<N;k++)
-            devY_[threadIdx.x*N + k + (currentBlockOfPoints * BLOCK_SIZE)] = devY[threadIdx.x*N+k];
-    }*/
-        // __syncthreads();
-        // printf(" idx = %d  devX= %.6f , %.6f\n", idx, devY[idx*N], devY[idx*N+1]);
     }
 }
 
@@ -153,7 +137,6 @@ int main(int argc, char **argv)
         exit(1);
     }
     fclose(inFile);
-    //memcpy(y, x,totalsize); //not needed
 
     /*Malloc for GPU input buffer*/
     gpuErrchk(cudaMalloc((void **)&dev_x, totalsize));
@@ -165,8 +148,7 @@ int main(int argc, char **argv)
     gpuErrchk(cudaMemcpy(dev_x, x, totalsize, cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(dev_y, x, totalsize, cudaMemcpyHostToDevice));
 
-    //  dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    //  dim3 dimGrid(filesize / dimBlock.x, filesize / dimBlock.y);
+    
     int threadsPerBlock = BLOCK_SIZE;
     int blocksPerGrid = (filesize + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -194,7 +176,8 @@ int main(int argc, char **argv)
     }*/
     cudaFree(dev_x);
     cudaFree(dev_y);
-
+	
+	/*Write data to file */
     resultsFile = fopen(RESULTS_FILE, "wb");
     for (int i = 0; i < filesize; i++)
     {
