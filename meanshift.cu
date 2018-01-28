@@ -46,7 +46,7 @@ __global__ void meanshiftKernel(double *devX, double *devY, int size)
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (idx < size) //if idx bigger than matrix height return
-    {               //printf(" idx = %d devX = %f \n", idx,devX_[idx]);
+    {               
 
         int j, k, iterations = 0;
         double sumNum[N] = {0}, sumDenum = 0, dist, meanshift = 0xFFFFFFFF, m_new[N], m[N];
